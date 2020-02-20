@@ -176,6 +176,25 @@ func TestAccAWSDBClusterParameterGroup_basic(t *testing.T) {
 					}),
 				),
 			},
+			{
+				Config: testAccAWSDBClusterParameterGroupUpdateParametersConfig(parameterGroupName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckAWSDBClusterParameterGroupExists(resourceName, &v),
+					testAccCheckAWSDBClusterParameterGroupAttributes(&v, parameterGroupName),
+					resource.TestCheckResourceAttr(
+						resourceName, "parameter.3127312348.name", "character_set_results"),
+					resource.TestCheckResourceAttr(
+						resourceName, "parameter.3127312348.value", "ascii"),
+					resource.TestCheckResourceAttr(
+						resourceName, "parameter.422535354.name", "character_set_server"),
+					resource.TestCheckResourceAttr(
+						resourceName, "parameter.422535354.value", "ascii"),
+					resource.TestCheckResourceAttr(
+						resourceName, "parameter.2478663599.name", "character_set_client"),
+					resource.TestCheckResourceAttr(
+						resourceName, "parameter.2478663599.value", "utf8"),
+				),
+			},
 		},
 	})
 }
@@ -612,6 +631,35 @@ resource "aws_rds_cluster_parameter_group" "test" {
   }
 }
 `, name)
+}
+
+func testAccAWSDBClusterParameterGroupUpdateParametersConfig(n string) string {
+	return fmt.Sprintf(`
+resource "aws_rds_cluster_parameter_group" "test" {
+  name        = "%s"
+  family      = "aurora5.6"
+  description = "Test cluster parameter group for terraform"
+
+  parameter {
+    name  = "character_set_server"
+    value = "ascii"
+  }
+
+  parameter {
+    name  = "character_set_client"
+    value = "utf8"
+  }
+
+  parameter {
+    name  = "character_set_results"
+    value = "ascii"
+  }
+
+  tags = {
+    foo = "bar"
+  }
+}
+`, n)
 }
 
 func testAccAWSDBClusterParameterGroupOnlyConfig(name string) string {

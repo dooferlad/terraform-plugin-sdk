@@ -163,6 +163,25 @@ func TestAccAWSDBParameterGroup_basic(t *testing.T) {
 					}),
 				),
 			},
+			{
+				Config: testAccAWSDBParameterGroupUpdateParametersConfig(groupName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckAWSDBParameterGroupExists(resourceName, &v),
+					testAccCheckAWSDBParameterGroupAttributes(&v, groupName),
+					resource.TestCheckResourceAttr(
+						resourceName, "parameter.3127312348.name", "character_set_results"),
+					resource.TestCheckResourceAttr(
+						resourceName, "parameter.3127312348.value", "ascii"),
+					resource.TestCheckResourceAttr(
+						resourceName, "parameter.422535354.name", "character_set_server"),
+					resource.TestCheckResourceAttr(
+						resourceName, "parameter.422535354.value", "ascii"),
+					resource.TestCheckResourceAttr(
+						resourceName, "parameter.2478663599.name", "character_set_client"),
+					resource.TestCheckResourceAttr(
+						resourceName, "parameter.2478663599.value", "utf8"),
+				),
+			},
 		},
 	})
 }
@@ -818,7 +837,7 @@ func testAccCheckAWSDBParameterNotUserDefined(n, paramName string) resource.Test
 		})
 
 		if userDefined {
-			return fmt.Errorf("DB Parameter is user defined")
+			return fmt.Errorf("DB Parameter %q is user defined", paramName)
 		}
 
 		return err
@@ -902,6 +921,30 @@ resource "aws_db_parameter_group" "test" {
   parameter {
     name  = "collation_connection"
     value = "utf8_unicode_ci"
+  }
+}
+`, n)
+}
+
+func testAccAWSDBParameterGroupUpdateParametersConfig(n string) string {
+	return fmt.Sprintf(`
+resource "aws_db_parameter_group" "test" {
+  name   = "%s"
+  family = "mysql5.6"
+
+  parameter {
+    name  = "character_set_server"
+    value = "ascii"
+  }
+
+  parameter {
+    name  = "character_set_client"
+    value = "utf8"
+  }
+
+  parameter {
+    name  = "character_set_results"
+    value = "ascii"
   }
 }
 `, n)

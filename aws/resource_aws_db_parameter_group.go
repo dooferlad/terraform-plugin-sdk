@@ -250,6 +250,16 @@ func resourceAwsDbParameterGroupUpdate(d *schema.ResourceData, meta interface{})
 		os := o.(*schema.Set)
 		ns := n.(*schema.Set)
 
+		toRemove := map[string]*rds.Parameter{}
+
+		for _, p := range expandParameters(os.List()) {
+			toRemove[*p.ParameterName] = p
+		}
+
+		for _, p := range expandParameters(ns.List()) {
+			delete(toRemove, *p.ParameterName)
+		}
+
 		// Expand the "parameter" set to aws-sdk-go compat []rds.Parameter
 		parameters := expandParameters(ns.Difference(os).List())
 
@@ -278,7 +288,11 @@ func resourceAwsDbParameterGroupUpdate(d *schema.ResourceData, meta interface{})
 		}
 
 		// Reset parameters that have been removed
-		resetParameters := expandParameters(os.Difference(ns).List())
+		var resetParameters []*rds.Parameter
+		for _, v := range toRemove {
+			resetParameters = append(resetParameters, v)
+		}
+
 		if len(resetParameters) > 0 {
 			maxParams := 20
 			for resetParameters != nil {

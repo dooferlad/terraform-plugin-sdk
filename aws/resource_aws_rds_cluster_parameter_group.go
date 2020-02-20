@@ -221,6 +221,24 @@ func resourceAwsRDSClusterParameterGroupUpdate(d *schema.ResourceData, meta inte
 			}
 		}
 
+		// Build a map with names from the new parameter set
+		newNames := make(map[string]bool, ns.Len())
+		for _, pRaw := range ns.List() {
+			data := pRaw.(map[string]interface{})
+			newNames[data["name"].(string)] = true
+		}
+
+		// Build a slice with parameters whose names from the original
+		// parameter set don't appear in the new parameter set. These are the
+		// parameters which have been removed.
+		removedParameters := make([]interface{}, 0, os.Len())
+		for _, pRaw := range os.List() {
+			data := pRaw.(map[string]interface{})
+			if !newNames[data["name"].(string)] {
+				removedParameters = append(removedParameters, data)
+			}
+		}
+
 		// Reset parameters that have been removed
 		parameters = expandParameters(os.Difference(ns).List())
 		if len(parameters) > 0 {
